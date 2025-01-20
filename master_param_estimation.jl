@@ -67,11 +67,6 @@ function integrate_master_equation(H, c_ops, ρ0, tlist)
     return tlist, ρ_t
 end
 
-struct MasterEqState
-    ρ::Matrix{ComplexF64}
-    logtrρ::Float64
-end
-
 function integrate_photon_counting_master_equation_with_record(H, c_ops, ρ0, tlist, jump_t, jump_index)
     # Define the Lindblad superoperator
     HS_dim = size(ρ0, 1)
