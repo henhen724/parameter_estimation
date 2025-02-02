@@ -2,10 +2,11 @@ using Base: AbstractArray, getindex, setindex!, size, map, similar, zero
 using LinearAlgebra
 
 # Define the Master Equation State
-struct MasterEquationState{T<:Complex} <: AbstractArray{T,2}
+struct MasterEquationState{T<:Complex} <: AbstractArray{T,1}
     rho::Matrix{T}         # Matrix variable
     logtrrho::T            # A number
 end
+
 
 
 Base.:+(x::MasterEquationState, y::MasterEquationState) = MasterEquationState(x.rho + y.rho, x.logtrrho + y.logtrrho)
@@ -16,6 +17,12 @@ Base.:/(x::MasterEquationState, y::Number) = MasterEquationState(x.rho / y, x.lo
 # Define the size of the MasterEquationState as the size of rho
 function Base.size(s::MasterEquationState)
     return size(s.rho)
+end
+
+
+# Define a convert method to convert to MasterEquationState
+function Base.convert(::Type{MasterEquationState{T}}, x::AbstractMatrix{T}) where {T<:Complex}
+    return MasterEquationState(x, log(tr(x)))
 end
 
 # Define how to access elements of the matrix (rho)

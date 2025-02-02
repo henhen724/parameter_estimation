@@ -38,6 +38,34 @@ c_ops = [sqrt(2 * γperp) * σm, sqrt(2 * κ) * a]
 tlist = 0:0.0001:1
 tout, ρ_t = timeevolution.master(tlist, dm(ψ0), Heff, c_ops)
 
+ρ0 = dm(ψ0)
+H = Heff
+
+HS_dim = size(ρ0, 1)
+
+H_data = H.data
+c_ops_data = map(x -> x.data, c_ops)
+function lindblad_rhs!(dstate, state::MasterEquationState, p, t)
+    ρ = state.rho
+    dstate.rho .= -im * (H_data * ρ - ρ * H_data)
+    for c_op in c_ops_data
+        dstate.rho .+= c_op * ρ * c_op - 0.5 * (adjoint(c_op) * c_op * ρ + ρ * adjoint(c_op) * c_op)
+    end
+end
+
+# Convert initial density matrix to vector form
+state0 = MasterEquationState(ρ0.data, 0.0im)
+
+# Define the ODE problem
+prob = ODEProblem{true,MasterEquationState}(lindblad_rhs!, state0, (tlist[1], tlist[end]))
+
+# Solve the ODE problem
+sol = solve(prob, Tsit5(), saveat=tlist)
+
+# Convert solution back to density matrix form
+ρ_t = [Operator(basis(ρ0), reshape(sol.u[i], size(ρ0))) for i in 1:length(sol.u)]
+
+
 tout_2, ρ_t2 = integrate_master_equation(tlist, dm(ψ0), Heff, c_ops)
 
 ρ0 = dm(ψ0)
